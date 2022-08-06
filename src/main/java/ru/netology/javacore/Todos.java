@@ -5,7 +5,15 @@ import java.util.stream.Collectors;
 
 public class Todos {
 
-    private final List<String> todos = new ArrayList<>();
+    private List<String> todos = new ArrayList<>();
+
+    public ArrayList<String> getTodos() {
+        return (ArrayList<String>) todos;
+    }
+
+    public void setTodos(ArrayList<String> todos) {
+        this.todos = todos;
+    }
 
     public void addTask(String task) {
         todos.add(task);

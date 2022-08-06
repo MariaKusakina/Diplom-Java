@@ -2,6 +2,9 @@ package ru.netology.javacore;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -9,55 +12,49 @@ import java.net.Socket;
 import java.util.Scanner;
 
 public class TodoServer {
-    private Todos todos;
-    private int port;
-    private String type;
-    private String task;
 
+    private int port;
+    private Todos todos;
 
     public TodoServer(int port, Todos todos) {
-        this.todos = todos;
         this.port = port;
+        this.todos = todos;
     }
-
-    public TodoServer(String type, String task) {
-        this.type = type;
-        this.task = task;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public String getTask() {
-        return task;
-    }
-
 
     public void start() throws IOException {
+        System.out.println("Starting server at " + port + ". Запустить Client");
+        JSONParser parser = new JSONParser();
+        try (ServerSocket serverSocket = new ServerSocket(port);) {
 
-        ServerSocket serverSocket = new ServerSocket(port);
-        System.out.println("Starting server at port " + port + ". Запустить Client");
-        while (true) {
-            try (Socket socket = serverSocket.accept();
-                 BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                 PrintWriter out = new PrintWriter(socket.getOutputStream());
-            ) {
-                String task = in.readLine();
-                GsonBuilder gsonBuilder = new GsonBuilder();
-                Gson gson = gsonBuilder.create();
-                TodoServer todos1 = gson.fromJson(task, TodoServer.class);
-                if (todos1.getType().equalsIgnoreCase("ADD")) {
-                    todos.addTask(todos1.getTask());
-                } else if (todos1.getType().equalsIgnoreCase("REMOVE")) {
-                    todos.removeTask(todos1.getTask());
+            while (true) {
+                try (
+                        Socket clientSocket = serverSocket.accept();
+                        PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+                        BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                ) {
+                    final String clientTaskJson = in.readLine();
+
+
+
+                    Object obj = parser.parse(clientTaskJson);
+                    JSONObject jsonObject = (JSONObject) obj;
+                    String typeParse = (String) jsonObject.get("type");
+                    String taskParse = (String) jsonObject.get("task");
+
+                    if (typeParse.equals("ADD")) {
+                        todos.addTask(taskParse);
+                    } else {
+                        if (typeParse.equals("REMOVE")) {
+                            todos.removeTask(taskParse);
+                        }
+                    }
+                    //sent to client
+                    System.out.println(String.format(todos.getAllTasks()));
                 }
-                out.println(todos.getAllTasks());
-            } catch (IOException e) {
-                System.out.println("Не могу стартовать сервер");
-                e.printStackTrace();
             }
+        } catch (IOException | ParseException e) {
+            System.out.println("Не могу стартовать сервер");
+            e.printStackTrace();
         }
     }
 }
-
