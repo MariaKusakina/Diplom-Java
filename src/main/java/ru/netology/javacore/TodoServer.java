@@ -33,9 +33,6 @@ public class TodoServer {
                         BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
                 ) {
                     final String clientTaskJson = in.readLine();
-
-
-
                     Object obj = parser.parse(clientTaskJson);
                     JSONObject jsonObject = (JSONObject) obj;
                     String typeParse = (String) jsonObject.get("type");
@@ -48,8 +45,7 @@ public class TodoServer {
                             todos.removeTask(taskParse);
                         }
                     }
-                    //sent to client
-                    System.out.println(String.format(todos.getAllTasks()));
+                    out.println(todos.getAllTasks());
                 }
             }
         } catch (IOException | ParseException e) {
